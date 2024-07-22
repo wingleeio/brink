@@ -45,6 +45,9 @@ export default function Page({ message }: Loader<typeof loader>) {
                         <div class="px-4 py-2 bg-slate-100 rounded-md">[[x + 1]]</div>
                     </template>
                 </div>
+                <template x-if="count > 5">
+                    <div class="text-red-500">Uh oh this is getting a bit large</div>
+                </template>
                 <h1 class="font-bold text-3xl text-white bg-indigo-500 p-4 rounded-md vt-name-[banner]">{message}</h1>
             </div>
         </div>
