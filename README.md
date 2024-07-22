@@ -1,9 +1,9 @@
 # Brink Monorepo
 
-To run the example run the following commands
+To run the demo run the following commands
 
-```bash
+```shell
 bun install
-cd packages/example
+cd packages/demo
 bun dev
 ```
