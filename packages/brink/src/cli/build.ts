@@ -10,10 +10,10 @@ export const build = async () => {
     if (!(await exists(".brink"))) await mkdir(".brink");
     const items = await readdir(".brink", { withFileTypes: true });
     const itemsToDelete = items.filter((item) => item.name !== "hmr.js" && item.name !== "hmr.js.map");
-    const promises = itemsToDelete.map((item) => rm(join(".brink", item.name)));
+    const promises = itemsToDelete.map((item) => rm(join(".brink", item.name), { force: true }));
     await Promise.all(promises);
 
-    const globals = new Bun.Glob(`src/+global.ts`);
+    const globals = new Bun.Glob(`src/pages/+global.ts`);
 
     const scripts = new Bun.Glob(`${directory}/**/+script.ts`);
 

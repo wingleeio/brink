@@ -9,9 +9,11 @@
     "dependencies": {
         "@brinkjs/core": "workspace:*",
         "@gtramontina.com/elysia-tailwind": "^2.0.0",
+        "alpinejs": "^3.14.1",
         "elysia": "latest"
     },
     "devDependencies": {
+        "@types/alpinejs": "^3.13.10",
         "bun-types": "latest",
         "tailwindcss": "^3.4.6",
         "tailwindcss-view-transitions": "^0.1.1"

@@ -2,12 +2,15 @@ import { Metadata, type MetadataProps } from "./Metadata";
 
 import Elysia from "elysia";
 import { join } from "path";
-import { readFileSync } from "fs";
-import { rm, readdir, mkdir, exists } from "fs/promises";
 import type { Page, Route } from "./types";
 import { isHTML } from "./utils";
 
-export const brink = async (config: { metadata?: MetadataProps } = {}) => {
+export const brink = async (
+    config: {
+        metadata?: MetadataProps;
+        transform?: (response: any) => any;
+    } = {}
+) => {
     const { directory, ...rest } = Object.assign(
         {
             directory: "src/pages",
@@ -27,8 +30,12 @@ export const brink = async (config: { metadata?: MetadataProps } = {}) => {
             as: "global",
         },
         (c) => {
-            if (isHTML(c.response)) {
+            if (isHTML(c.response) && typeof c.response === "string") {
                 c.set.headers["content-type"] = "text/html;charset=utf-8";
+            }
+
+            if (config.transform) {
+                c.response = config.transform(c.response);
             }
         }
     );
@@ -43,16 +50,19 @@ export const brink = async (config: { metadata?: MetadataProps } = {}) => {
     const scriptMap = new Map<string, string>();
 
     const scripts = new Bun.Glob(`${directory}/**/+script.ts`);
+    const globals = new Bun.Glob(`src/pages/+global.ts`);
+
+    for (const path of globals.scanSync()) {
+        scriptMap.set("global", path.replace("src/pages", "brink").replace(".ts", ".js"));
+    }
 
     for (const path of scripts.scanSync()) {
-        scriptMap.set(
-            path.replace("+script.ts", "+page.tsx"),
-            path.replace(directory, "brink/pages").replace(".ts", ".js")
-        );
+        scriptMap.set(path.replace("+script.ts", "+page.tsx"), path.replace(directory, "brink").replace(".ts", ".js"));
     }
 
     for (const path of pages.scanSync()) {
         const url = path.replace(directory, "").replace("/+page.tsx", "") ?? "/";
+
         const module: Page = await import(
             join(process.cwd(), path.replace("tsx", "js").replace("src/pages", ".brink/"))
         );
@@ -146,19 +156,17 @@ export const brink = async (config: { metadata?: MetadataProps } = {}) => {
         plugin.use(context).delete(url, module.default);
     }
 
-    const globals = new Bun.Glob(`src/+global.ts`);
-
     for (const path of scripts.scanSync()) {
         plugin.get(
-            "/" + path.replace("src", "brink").replace(".ts", ".js"),
+            "/" + path.replace("src/pages", "brink").replace(".ts", ".js"),
             () => new Response(Bun.file(path.replace(directory, ".brink").replace(".ts", ".js")))
         );
     }
 
     for (const path of globals.scanSync()) {
         plugin.get(
-            "/" + path.replace("src", "brink").replace(".ts", ".js"),
-            () => new Response(Bun.file(path.replace("src", ".brink").replace(".ts", ".js")))
+            "/" + path.replace("src/pages", "brink").replace(".ts", ".js"),
+            () => new Response(Bun.file(path.replace("src/pages", ".brink").replace(".ts", ".js")))
         );
     }
 
@@ -174,16 +182,3 @@ export const brink = async (config: { metadata?: MetadataProps } = {}) => {
     }
     return plugin;
 };
-
-function externals(): string[] {
-    const packageJson = JSON.parse(readFileSync("./package.json").toString());
-
-    const sections = ["dependencies", "devDependencies", "peerDependencies"],
-        externals = new Set<string>();
-
-    for (const section of sections) {
-        if (packageJson[section]) Object.keys(packageJson[section]).forEach((_) => externals.add(_));
-    }
-
-    return Array.from(externals);
-}

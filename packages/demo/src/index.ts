@@ -13,6 +13,7 @@ const app = new Elysia()
     .use(
         brink({
             metadata: {
+                scripts: ["https://unpkg.com/htmx.org@2.0.1"],
                 links: [
                     {
                         rel: "stylesheet",
@@ -20,8 +21,16 @@ const app = new Elysia()
                     },
                 ],
             },
+            transform(value) {
+                if (typeof value === "string") {
+                    const delimiters = /\[\[(.*?)\]\]/g;
+                    return value.replace(delimiters, (_, key) => `<span x-text='${key}'></span>`);
+                }
+
+                return value;
+            },
         })
     )
     .listen(process.env.PORT ?? 3000);
 
-console.log(`Brink is running at ${app.server?.hostname}:${app.server?.port}`);
+console.log(`Brink is running at http://${app.server?.hostname}:${app.server?.port}`);
