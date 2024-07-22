@@ -2,7 +2,11 @@ import type { BrinkConfig } from "@brinkjs/core";
 
 export default {
     metadata: {
-        scripts: ["https://unpkg.com/htmx.org@2.0.1"],
+        scripts: [
+            {
+                src: "https://unpkg.com/htmx.org@2.0.1",
+            },
+        ],
         links: [
             {
                 rel: "stylesheet",

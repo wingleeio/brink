@@ -40,7 +40,7 @@ export default function Page({ message }: Loader<typeof loader>) {
                         +
                     </button>
                 </div>
-                <div class="flex gap-2">
+                <div class="flex gap-2 flex-wrap">
                     <template x-for="(_, x) in new Array(Math.abs(count))">
                         <div class="px-4 py-2 bg-slate-100 rounded-md">[[x + 1]]</div>
                     </template>

@@ -37,8 +37,6 @@ new Elysia()
     })
     .listen(10000);
 
-await build();
-
 watch("src/", { recursive: true }, async (event, filename) => {
     if (event !== "change") return;
     if (resolve(filename as string).startsWith(".brink")) return;

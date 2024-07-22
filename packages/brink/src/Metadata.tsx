@@ -9,11 +9,17 @@ interface LinkProps {
     href?: string;
 }
 
+interface ScriptProps {
+    src: string;
+    module?: boolean;
+    defer?: boolean;
+}
+
 export interface MetadataProps {
     title?: string;
     description?: string;
     opengraph?: MetaProps[];
-    scripts?: string[];
+    scripts?: ScriptProps[];
     meta?: MetaProps[];
     links?: LinkProps[];
 }
@@ -39,8 +45,8 @@ export function Metadata({
             {links.map((linkProps) => (
                 <link {...linkProps} />
             ))}
-            {scripts.map((script) => (
-                <script src={script} />
+            {scripts.map((scriptProps) => (
+                <script {...scriptProps} />
             ))}
         </>
     );
