@@ -1,0 +1,19 @@
+{
+    "name": "example",
+    "version": "1.0.50",
+    "scripts": {
+        "build": "brink build",
+        "start": "brink start",
+        "dev": "brink dev"
+    },
+    "dependencies": {
+        "@brinkjs/core": "workspace:*",
+        "@gtramontina.com/elysia-tailwind": "^2.0.0",
+        "elysia": "latest"
+    },
+    "devDependencies": {
+        "bun-types": "latest",
+        "tailwindcss": "^3.4.6",
+        "tailwindcss-view-transitions": "^0.1.1"
+    }
+}
