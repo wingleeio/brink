@@ -15,6 +15,7 @@
         "skipLibCheck": true,
         "noFallthroughCasesInSwitch": true,
         "plugins": [{ "name": "@kitajs/ts-html-plugin" }],
+        "types": ["@kitajs/html/alpine.d.ts"],
         "paths": {
             "@/*": ["./src/*"]
         }
