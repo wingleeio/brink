@@ -2,15 +2,11 @@ import { Metadata, type MetadataProps } from "./Metadata";
 
 import Elysia from "elysia";
 import { join } from "path";
-import type { Page, Route } from "./types";
+import type { BrinkConfig, Page, Route } from "./types";
 import { isHTML } from "./utils";
 
-export const brink = async (
-    config: {
-        metadata?: MetadataProps;
-        transform?: (response: any) => any;
-    } = {}
-) => {
+export const brink = async (config: BrinkConfig = {}) => {
+    const configFromFile = await loadConfig();
     const { directory, ...rest } = Object.assign(
         {
             directory: "src/pages",
@@ -20,6 +16,7 @@ export const brink = async (
                 meta: [{}],
             },
         },
+        configFromFile,
         config
     );
     const plugin = new Elysia({
@@ -34,8 +31,8 @@ export const brink = async (
                 c.set.headers["content-type"] = "text/html;charset=utf-8";
             }
 
-            if (config.transform) {
-                c.response = config.transform(c.response);
+            if (rest.transform) {
+                c.response = rest.transform(c.response);
             }
         }
     );
@@ -182,3 +179,12 @@ export const brink = async (
     }
     return plugin;
 };
+
+async function loadConfig() {
+    try {
+        const configFromFile = await import(join(process.cwd(), "brink.config.ts"));
+        return configFromFile.default;
+    } catch (error) {
+        return {};
+    }
+}

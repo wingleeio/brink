@@ -1,4 +1,5 @@
 import type Elysia from "elysia";
+import type { MetadataProps } from "./Metadata";
 
 export interface Route {
     context?: Elysia;
@@ -13,3 +14,8 @@ export interface Page {
 }
 
 export type Loader<T extends (...args: any) => any> = Awaited<ReturnType<T>>;
+
+export type BrinkConfig = {
+    metadata?: MetadataProps;
+    transform?: (response: any) => any;
+};
