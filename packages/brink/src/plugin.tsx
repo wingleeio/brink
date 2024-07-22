@@ -72,6 +72,9 @@ export const brink = async (config: BrinkConfig = {}) => {
             let script = scriptMap.get(path);
             let global = scriptMap.get("global");
             if (module.loader) props = await module.loader(c);
+            if (c.query.query === "loader") {
+                return props;
+            }
             if (module.metadata) metadata = Object.assign(metadata, await module.metadata(c));
             return (
                 <html>
