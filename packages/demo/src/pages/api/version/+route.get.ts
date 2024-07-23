@@ -1,8 +1,9 @@
+import Elysia, { t } from "elysia";
+
 import type { Context } from "@brinkjs/core";
 import { MainContext } from "@/context/MainContext";
-import { t } from "elysia";
 
-export const context = MainContext.guard({
+export const context = new Elysia().use(MainContext).guard({
     response: t.Object({
         version: t.String(),
     }),

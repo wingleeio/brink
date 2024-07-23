@@ -1,3 +1,1 @@
-import Alpine from "alpinejs";
-
-Alpine.start();
+console.log("Scripts here are available globally across all pages.");
