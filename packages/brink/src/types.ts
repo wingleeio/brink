@@ -19,3 +19,13 @@ export type BrinkConfig = {
     metadata?: MetadataProps;
     transform?: (response: any) => any;
 };
+
+export type Context<T extends { [key in string]: any }> = T["get" | "post" | "put" | "patch" | "delete"] extends (
+    url: any,
+    handler: infer H,
+    ...rest: any
+) => any
+    ? H extends (context: infer C, ...rest: any) => any
+        ? C
+        : never
+    : never;

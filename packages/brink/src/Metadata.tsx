@@ -11,7 +11,7 @@ interface LinkProps {
 
 interface ScriptProps {
     src: string;
-    module?: boolean;
+    type?: string;
     defer?: boolean;
 }
 

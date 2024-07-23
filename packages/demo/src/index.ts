@@ -1,8 +1,10 @@
 import { Elysia } from "elysia";
 import { brink } from "@brinkjs/core";
+import swagger from "@elysiajs/swagger";
 import { tailwind } from "@gtramontina.com/elysia-tailwind";
 
 const app = new Elysia()
+    .use(swagger())
     .use(
         tailwind({
             path: "/styles.css",

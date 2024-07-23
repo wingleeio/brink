@@ -66,34 +66,36 @@ export const brink = async (config: BrinkConfig = {}) => {
         const Component = module.default;
         const context = module.context ?? new Elysia();
 
-        plugin.use(context).get(url.length ? url : "/", async (c) => {
-            let props = {};
-            let metadata = Object.assign({}, rest.metadata);
-            let script = scriptMap.get(path);
-            let global = scriptMap.get("global");
-            if (module.loader) props = await module.loader(c);
-            if (c.query.query === "loader") {
-                return props;
-            }
-            if (module.metadata) metadata = Object.assign(metadata, await module.metadata(c));
-            return (
-                <html>
-                    <head>
-                        <meta charset="UTF-8" />
-                        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                        {/* @ts-ignore */}
-                        <Metadata {...metadata} />
-                    </head>
-                    <body>
-                        {/* @ts-ignore */}
-                        <Component {...props} />
-                        {global ? <script src={"./" + global} /> : null}
-                        {script ? <script src={"./" + script} /> : null}
-                        {process.env.NODE_ENV === "development" ? <script src="./brink/hmr.js"></script> : null}
-                    </body>
-                </html>
-            );
-        });
+        plugin.use(
+            context.get(url.length ? url : "/", async (c) => {
+                let props = {};
+                let metadata = Object.assign({}, rest.metadata);
+                let script = scriptMap.get(path);
+                let global = scriptMap.get("global");
+                if (module.loader) props = await module.loader(c);
+                if (c.query.query === "loader") {
+                    return props;
+                }
+                if (module.metadata) metadata = Object.assign(metadata, await module.metadata(c));
+                return (
+                    <html>
+                        <head>
+                            <meta charset="UTF-8" />
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                            {/* @ts-ignore */}
+                            <Metadata {...metadata} />
+                        </head>
+                        <body>
+                            {/* @ts-ignore */}
+                            <Component {...props} />
+                            {global ? <script src={"./" + global} /> : null}
+                            {script ? <script src={"./" + script} /> : null}
+                            {process.env.NODE_ENV === "development" ? <script src="./brink/hmr.js"></script> : null}
+                        </body>
+                    </html>
+                );
+            })
+        );
     }
 
     for (const path of getRoutes.scanSync()) {
@@ -105,7 +107,7 @@ export const brink = async (config: BrinkConfig = {}) => {
                 .replace(/\/\+route\.get\.(ts|tsx)$/, "") ?? "/";
         const module: Route = await import(join(process.cwd(), path));
         const context = module.context ?? new Elysia();
-        plugin.use(context).get(url, module.default);
+        plugin.use(context.get(url, module.default));
     }
 
     for (const path of postRoutes.scanSync()) {
@@ -117,7 +119,7 @@ export const brink = async (config: BrinkConfig = {}) => {
                 .replace(/\/\+route\.post\.(ts|tsx)$/, "") ?? "/";
         const module: Route = await import(join(process.cwd(), path));
         const context = module.context ?? new Elysia();
-        plugin.use(context).post(url, module.default);
+        plugin.use(context.post(url, module.default));
     }
 
     for (const path of putRoutes.scanSync()) {
@@ -129,7 +131,7 @@ export const brink = async (config: BrinkConfig = {}) => {
                 .replace(/\/\+route\.put\.(ts|tsx)$/, "") ?? "/";
         const module: Route = await import(join(process.cwd(), path));
         const context = module.context ?? new Elysia();
-        plugin.use(context).put(url, module.default);
+        plugin.use(context.put(url, module.default));
     }
 
     for (const path of patchRoutes.scanSync()) {
@@ -141,7 +143,7 @@ export const brink = async (config: BrinkConfig = {}) => {
                 .replace(/\/\+route\.patch\.(ts|tsx)$/, "") ?? "/";
         const module: Route = await import(join(process.cwd(), path));
         const context = module.context ?? new Elysia();
-        plugin.use(context).patch(url, module.default);
+        plugin.use(context.patch(url, module.default));
     }
 
     for (const path of deleteRoutes.scanSync()) {
@@ -153,7 +155,7 @@ export const brink = async (config: BrinkConfig = {}) => {
                 .replace(/\/\+route\.delete\.(ts|tsx)$/, "") ?? "/";
         const module: Route = await import(join(process.cwd(), path));
         const context = module.context ?? new Elysia();
-        plugin.use(context).delete(url, module.default);
+        plugin.use(context.delete(url, module.default));
     }
 
     for (const path of scripts.scanSync()) {

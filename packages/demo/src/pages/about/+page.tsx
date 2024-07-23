@@ -1,10 +1,10 @@
-import type { InferContext } from "elysia";
+import type { Context, MetadataProps } from "@brinkjs/core";
+
 import { MainContext } from "@/context/MainContext";
-import type { MetadataProps } from "@brinkjs/core";
 
 export const context = MainContext;
 
-export const metadata = async (c: InferContext<typeof context>): Promise<MetadataProps> => {
+export const metadata = async (c: Context<typeof context>): Promise<MetadataProps> => {
     return {
         title: `Brink ${c.store.version} - About`,
         description: "This is a demo page for Brink, using Alpine.js",

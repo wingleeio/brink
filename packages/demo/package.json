@@ -8,6 +8,7 @@
     },
     "dependencies": {
         "@brinkjs/core": "workspace:*",
+        "@elysiajs/swagger": "^1.1.0",
         "@gtramontina.com/elysia-tailwind": "^2.0.0",
         "alpinejs": "^3.14.1",
         "elysia": "latest"
