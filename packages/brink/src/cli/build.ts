@@ -27,6 +27,11 @@ export const build = async () => {
         scriptEntries.push(path);
     }
 
+    const variables = Object.keys(process.env);
+
+    const contents = variables.map((variable) => `export const ${variable} = process.env.${variable}!;`).join("\n");
+    await Bun.write(join(".brink", "env.ts"), contents);
+
     if (scriptEntries.length !== 0) {
         await Bun.build({
             entrypoints: scriptEntries,

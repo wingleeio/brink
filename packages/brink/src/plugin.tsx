@@ -1,9 +1,9 @@
-import { Metadata, type MetadataProps } from "./Metadata";
+import type { BrinkConfig, Page, Route } from "./types";
 
 import Elysia from "elysia";
-import { join } from "path";
-import type { BrinkConfig, Page, Route } from "./types";
+import { Metadata } from "./Metadata";
 import { isHTML } from "./utils";
+import { join } from "path";
 
 export const brink = async (config: BrinkConfig = {}) => {
     const configFromFile = await loadConfig();

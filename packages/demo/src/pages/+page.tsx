@@ -1,13 +1,15 @@
 import type { Context, Loader, MetadataProps } from "@brinkjs/core";
+import { HELLO, SECRET } from "@/brink/env";
 
 import { MainContext } from "@/context/MainContext";
 
 export const context = MainContext;
 
 export const metadata = async (c: Context<typeof context>): Promise<MetadataProps> => {
+    console.log("ENV", HELLO, SECRET);
     return {
         title: `Brink ${c.store.version} - Demo`,
-        description: "This is a demo page for Brink, using Alpine.js",
+        description: "This is a demo page for Brink, using HTMX.",
     };
 };
 

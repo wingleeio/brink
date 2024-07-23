@@ -45,4 +45,12 @@ watch("src/", { recursive: true }, async (event, filename) => {
     await build();
 });
 
+watch(".env", { recursive: true }, async (event, filename) => {
+    if (event !== "change") return;
+    if (resolve(filename as string).startsWith(".brink")) return;
+    console.log(`\nChange detected - ${filename}`);
+    console.log("Rebuilding...");
+    await build();
+});
+
 await Bun.$`NODE_ENV=development PORT=${process.env.PORT || 5100} bun run --watch src/index.ts`;
