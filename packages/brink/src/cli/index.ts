@@ -17,6 +17,7 @@ program
     .command("dev")
     .description("start the development server")
     .action(() => {
+        process.env.NODE_ENV = "development";
         import("./development");
     });
 

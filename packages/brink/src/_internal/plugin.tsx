@@ -1,9 +1,20 @@
-import type { BrinkConfig, Page, Route } from "./types";
+import type { BrinkConfig, Page, PageServer, Route } from "./types";
+import { json, useLoaderData } from "react-router-dom";
 
+import App from "./App";
 import Elysia from "elysia";
-import { Metadata } from "./Metadata";
+import type { MetadataProps } from "./Metadata";
+import {
+    createStaticHandler,
+    createStaticRouter,
+    StaticRouterProvider,
+    type StaticHandlerContext,
+} from "react-router-dom/server";
 import { isHTML } from "./utils";
 import { join } from "path";
+import { loadConfig } from "./config";
+//@ts-expect-error
+import { renderToReadableStream } from "react-dom/server.browser";
 
 export const brink = async (config: BrinkConfig = {}) => {
     const configFromFile = await loadConfig();
@@ -29,6 +40,7 @@ export const brink = async (config: BrinkConfig = {}) => {
         (c) => {
             if (isHTML(c.response) && typeof c.response === "string") {
                 c.set.headers["content-type"] = "text/html;charset=utf-8";
+                c.response = "<!DOCTYPE html>" + c.response;
             }
 
             if (rest.transform) {
@@ -44,18 +56,12 @@ export const brink = async (config: BrinkConfig = {}) => {
     const patchRoutes = new Bun.Glob(`${directory}/**/+route.patch.{ts,tsx}`);
     const deleteRoutes = new Bun.Glob(`${directory}/**/+route.delete.{ts,tsx}`);
 
-    const scriptMap = new Map<string, string>();
-
-    const scripts = new Bun.Glob(`${directory}/**/+script.ts`);
-    const globals = new Bun.Glob(`src/pages/+global.ts`);
-
-    for (const path of globals.scanSync()) {
-        scriptMap.set("global", path.replace("src/pages", "brink").replace(".ts", ".js"));
-    }
-
-    for (const path of scripts.scanSync()) {
-        scriptMap.set(path.replace("+script.ts", "+page.tsx"), path.replace(directory, "brink").replace(".ts", ".js"));
-    }
+    const imported: {
+        url: string;
+        module: Page;
+        moduleServer: PageServer | null;
+        context: Elysia;
+    }[] = [];
 
     for (const path of pages.scanSync()) {
         const url = path.replace(directory, "").replace("/+page.tsx", "") ?? "/";
@@ -63,40 +69,74 @@ export const brink = async (config: BrinkConfig = {}) => {
         const module: Page = await import(
             join(process.cwd(), path.replace("tsx", "js").replace("src/pages", ".brink/"))
         );
-        const Component = module.default;
-        const context = module.context ?? new Elysia();
+        let moduleServer: PageServer | null = null;
 
+        try {
+            moduleServer = await import(
+                join(process.cwd(), path.replace("tsx", "server.js").replace("src/pages", ".brink/"))
+            );
+        } catch (e) {}
+
+        const context = moduleServer?.context ?? new Elysia();
+
+        imported.push({ url, module, context, moduleServer });
+    }
+
+    for (const route of imported) {
         plugin.use(
-            context.get(url.length ? url : "/", async (c) => {
-                let props = {};
-                let metadata = Object.assign({}, rest.metadata);
-                let script = scriptMap.get(path);
-                let global = scriptMap.get("global");
-                if (module.loader) props = await module.loader(c);
+            route.context.get(route.url.length ? route.url : "/", async (c) => {
                 if (c.query.query === "loader") {
-                    return props;
+                    return (await route?.moduleServer?.loader?.(c)) ?? {};
                 }
-                if (module.metadata) metadata = Object.assign(metadata, await module.metadata(c));
-                return (
-                    <html>
-                        <head>
-                            <meta charset="UTF-8" />
-                            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                            {/* @ts-ignore */}
-                            <Metadata {...metadata} />
-                        </head>
-                        <body>
-                            {/* @ts-ignore */}
-                            <Component {...props} />
-                            {global ? <script src={"./" + global} /> : null}
-                            {script ? <script src={"./" + script} /> : null}
-                            {process.env.NODE_ENV === "development" ? <script src="./brink/hmr.js"></script> : null}
-                        </body>
-                    </html>
+                if (c.query.query === "metadata") {
+                    let metadata: MetadataProps = Object.assign({}, rest.metadata);
+                    if (route.moduleServer?.metadata)
+                        metadata = Object.assign(metadata, await route?.moduleServer?.metadata?.(c));
+                    return metadata;
+                }
+
+                const dataRoutes: any = [];
+
+                dataRoutes.push({
+                    path: route.url.length ? route.url : "/",
+                    async loader() {
+                        let loader = {};
+                        let metadata: MetadataProps = Object.assign({}, rest.metadata);
+                        if (route.moduleServer?.loader) loader = await route.moduleServer.loader(c);
+
+                        if (route.moduleServer?.metadata)
+                            metadata = Object.assign(metadata, await route.moduleServer.metadata(c));
+                        return json({ metadata, loader });
+                    },
+                    Component() {
+                        const data: any = useLoaderData();
+                        return (
+                            <App metadata={data?.metadata}>
+                                <route.module.default {...data?.loader} />
+                            </App>
+                        );
+                    },
+                });
+
+                const handler = createStaticHandler(dataRoutes);
+                const context = (await handler.query(c.request)) as StaticHandlerContext;
+                const router = createStaticRouter(handler.dataRoutes, context);
+
+                const stream = await renderToReadableStream(
+                    <StaticRouterProvider router={router} context={context} />,
+                    {
+                        bootstrapModules: ["/brink/client.js", "/brink/hmr.js"],
+                    }
                 );
+
+                return new Response(stream, {
+                    headers: { "Content-Type": "text/html" },
+                });
             })
         );
     }
+
+    plugin.get("/brink/client.js", () => new Response(Bun.file(".brink/client.js")));
 
     for (const path of getRoutes.scanSync()) {
         const url =
@@ -158,20 +198,6 @@ export const brink = async (config: BrinkConfig = {}) => {
         plugin.use(context.delete(url, module.default));
     }
 
-    for (const path of scripts.scanSync()) {
-        plugin.get(
-            "/" + path.replace("src/pages", "brink").replace(".ts", ".js"),
-            () => new Response(Bun.file(path.replace(directory, ".brink").replace(".ts", ".js")))
-        );
-    }
-
-    for (const path of globals.scanSync()) {
-        plugin.get(
-            "/" + path.replace("src/pages", "brink").replace(".ts", ".js"),
-            () => new Response(Bun.file(path.replace("src/pages", ".brink").replace(".ts", ".js")))
-        );
-    }
-
     const glob = new Bun.Glob(`public/**`);
 
     for (const path of glob.scanSync()) {
@@ -184,12 +210,3 @@ export const brink = async (config: BrinkConfig = {}) => {
     }
     return plugin;
 };
-
-async function loadConfig() {
-    try {
-        const configFromFile = await import(join(process.cwd(), "brink.config.ts"));
-        return configFromFile.default;
-    } catch (error) {
-        return {};
-    }
-}

@@ -7,10 +7,13 @@ export interface Route {
 }
 
 export interface Page {
+    default: (props: object) => React.ReactNode;
+}
+
+export interface PageServer {
     context?: Elysia;
     metadata?: (c: object) => Promise<object>;
     loader?: (c: object) => Promise<object>;
-    default: (props: object) => JSX.Element;
 }
 
 export type Loader<T extends (...args: any) => any> = Awaited<ReturnType<T>>;
@@ -18,6 +21,7 @@ export type Loader<T extends (...args: any) => any> = Awaited<ReturnType<T>>;
 export type BrinkConfig = {
     metadata?: MetadataProps;
     transform?: (response: any) => any;
+    plugins?: Array<Elysia | Promise<Elysia>>;
 };
 
 export type Context<T extends { [key in string]: any }> = T["get" | "post" | "put" | "patch" | "delete"] extends (

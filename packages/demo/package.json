@@ -10,13 +10,26 @@
         "@brinkjs/core": "workspace:*",
         "@elysiajs/swagger": "^1.1.0",
         "@gtramontina.com/elysia-tailwind": "^2.0.0",
+        "@radix-ui/react-icons": "^1.3.0",
+        "@radix-ui/react-label": "^2.1.0",
+        "@radix-ui/react-slot": "^1.1.0",
+        "@radix-ui/react-switch": "^1.1.0",
         "alpinejs": "^3.14.1",
-        "elysia": "latest"
+        "class-variance-authority": "^0.7.0",
+        "clsx": "^2.1.1",
+        "elysia": "^1.1.4",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1",
+        "tailwind-merge": "^2.4.0",
+        "tailwindcss-animate": "^1.0.7"
     },
     "devDependencies": {
         "@types/alpinejs": "^3.13.10",
+        "@types/react": "^18.3.3",
+        "@types/react-dom": "^18.3.0",
         "bun-types": "latest",
         "tailwindcss": "^3.4.6",
-        "tailwindcss-view-transitions": "^0.1.1"
+        "tailwindcss-view-transitions": "^0.1.1",
+        "typescript": "^5.5.4"
     }
 }

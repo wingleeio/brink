@@ -14,12 +14,6 @@ function dispatch() {
     });
 }
 
-await Bun.build({
-    entrypoints: [join(__dirname, "../hmr.ts")],
-    outdir: ".brink",
-    sourcemap: "external",
-});
-
 new Elysia()
     .ws("/ws", {
         open(ws) {
@@ -45,9 +39,10 @@ watch("src/", { recursive: true }, async (event, filename) => {
     await build();
 });
 
-watch(".env", { recursive: true }, async (event, filename) => {
+watch("./", { recursive: true }, async (event, filename) => {
     if (event !== "change") return;
     if (resolve(filename as string).startsWith(".brink")) return;
+    if (filename?.startsWith(".brink") || filename?.startsWith("src/")) return;
     console.log(`\nChange detected - ${filename}`);
     console.log("Rebuilding...");
     await build();

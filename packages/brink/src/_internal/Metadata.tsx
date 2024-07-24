@@ -36,17 +36,17 @@ export function Metadata({
         <>
             {title && <title>{title}</title>}
             {description && <meta name="description" content={description} />}
-            {meta.map((metaProps) => (
-                <meta {...metaProps} />
+            {meta.map((metaProps, i) => (
+                <meta key={i} {...metaProps} />
             ))}
-            {opengraph.map((og) => (
-                <meta property={og.property} content={og.content} />
+            {opengraph.map((og, i) => (
+                <meta key={i} property={og.property} content={og.content} />
             ))}
-            {links.map((linkProps) => (
-                <link {...linkProps} />
+            {links.map((linkProps, i) => (
+                <link key={i} {...linkProps} />
             ))}
-            {scripts.map((scriptProps) => (
-                <script {...scriptProps} />
+            {scripts.map((scriptProps, i) => (
+                <script key={i} {...scriptProps} />
             ))}
         </>
     );

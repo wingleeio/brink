@@ -1,5 +1,5 @@
 import Elysia from "elysia";
-import { GeneratorEmitter } from "@/lib/GeneratorEmitter";
+import { GeneratorEmitter } from "$lib/GeneratorEmitter";
 
 const events = new GeneratorEmitter();
 
