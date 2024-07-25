@@ -1,5 +1,6 @@
 import { Button } from "$components/ui/button";
 import { Link } from "@brinkjs/core/router";
+import { props } from "./$props";
 import { useState } from "react";
 
 const [count, setCount] = useState(0);
@@ -10,9 +11,7 @@ const [count, setCount] = useState(0);
         <div className="px-4 py-2 bg-slate-100 rounded-md">{count}</div>
         <Button onClick={() => setCount(count + 1)}>Increment</Button>
     </div>
-    <div>
-        <Link to="/about">
-            <Button variant="outline">About</Button>
-        </Link>
-    </div>
+    <Link className="vt-name-[button]" to="/about" unstable_viewTransition>
+        <Button variant="outline">About</Button>
+    </Link>
 </div>;

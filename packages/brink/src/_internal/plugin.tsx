@@ -13,8 +13,9 @@ import {
 import { isHTML } from "./utils";
 import { join } from "path";
 import { loadConfig } from "./config";
-//@ts-expect-error
-import { renderToReadableStream } from "react-dom/server.browser";
+import { renderToPipeableStream } from "react-dom/server";
+import stream from "stream";
+import { Suspense } from "react";
 
 export const brink = async (config: BrinkConfig = {}) => {
     const configFromFile = await loadConfig();
@@ -122,14 +123,37 @@ export const brink = async (config: BrinkConfig = {}) => {
                 const context = (await handler.query(c.request)) as StaticHandlerContext;
                 const router = createStaticRouter(handler.dataRoutes, context);
 
-                const stream = await renderToReadableStream(
-                    <StaticRouterProvider router={router} context={context} />,
+                const rsc = await renderToPipeableStream(
+                    <Suspense>
+                        <StaticRouterProvider router={router} context={context} />
+                    </Suspense>,
                     {
                         bootstrapModules: ["/brink/client.js", "/brink/hmr.js"],
                     }
                 );
 
-                return new Response(stream, {
+                const readable = new ReadableStream({
+                    start: (controller) => {
+                        rsc.pipe(
+                            new stream.Writable({
+                                write(chunk, _, callback) {
+                                    controller.enqueue(chunk);
+                                    callback();
+                                },
+                                destroy(error, callback) {
+                                    if (error) {
+                                        controller.error(error);
+                                    } else {
+                                        controller.close();
+                                    }
+                                    callback(error);
+                                },
+                            })
+                        );
+                    },
+                });
+
+                return new Response(readable, {
                     headers: { "Content-Type": "text/html" },
                 });
             })

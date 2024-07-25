@@ -10,7 +10,7 @@ export const bundlePageServer = (code: string) => {
     traverse(ast, {
         ImportDeclaration(path) {
             const source = path.node.source;
-            if (source.value === "$props") {
+            if (source.value === "./$props") {
                 path.remove();
             }
         },
@@ -60,13 +60,6 @@ export const bundlePagesClient = (code: string, pages: string[]) => {
                 importDeclarations.push(importDeclaration);
             });
 
-            importDeclarations.push(
-                t.importDeclaration(
-                    [t.importDefaultSpecifier(t.identifier("FN"))],
-                    t.stringLiteral("./pages/index.tsx")
-                )
-            );
-
             const nodes = path.node.body.filter((node) => !t.isImportDeclaration(node));
 
             path.node.body = [
@@ -93,6 +86,70 @@ export const bundlePagesClient = (code: string, pages: string[]) => {
                     return node;
                 }),
             ];
+        },
+    });
+
+    return generate(ast, {}, code).code;
+};
+
+export const createPropTypes = (code: string) => {
+    const ast = parser.parse(code, { sourceType: "module", plugins: ["typescript"] });
+
+    traverse(ast, {
+        Program(path) {
+            const nodes = path.node.body;
+
+            const loader = nodes.find(
+                (node) =>
+                    (t.isFunctionDeclaration(node) && t.isIdentifier(node.id, { name: "loader" })) ||
+                    (t.isVariableDeclaration(node) &&
+                        node.declarations.some(
+                            (decl) =>
+                                t.isIdentifier(decl.id, { name: "loader" }) &&
+                                (t.isArrowFunctionExpression(decl.init) || t.isFunctionExpression(decl.init))
+                        )) ||
+                    (t.isExportNamedDeclaration(node) &&
+                        ((t.isFunctionDeclaration(node.declaration) &&
+                            t.isIdentifier(node.declaration.id, { name: "loader" })) ||
+                            (t.isVariableDeclaration(node.declaration) &&
+                                node.declaration.declarations.some(
+                                    (decl) =>
+                                        t.isIdentifier(decl.id, { name: "loader" }) &&
+                                        (t.isArrowFunctionExpression(decl.init) || t.isFunctionExpression(decl.init))
+                                ))))
+            );
+
+            path.node.body = [];
+
+            if (loader) {
+                path.node.body.push(
+                    t.importDeclaration(
+                        [t.importSpecifier(t.identifier("loader"), t.identifier("loader"))],
+                        t.stringLiteral("./+page.server")
+                    )
+                );
+                path.node.body.push(
+                    t.exportNamedDeclaration(
+                        t.variableDeclaration("const", [
+                            t.variableDeclarator(
+                                t.identifier("props"),
+                                t.tsAsExpression(
+                                    t.objectExpression([]),
+                                    t.tsTypeReference(
+                                        t.identifier("Awaited"),
+                                        t.tsTypeParameterInstantiation([
+                                            t.tsTypeReference(
+                                                t.identifier("ReturnType"),
+                                                t.tsTypeParameterInstantiation([t.tsTypeQuery(t.identifier("loader"))])
+                                            ),
+                                        ])
+                                    )
+                                )
+                            ),
+                        ])
+                    )
+                );
+            }
         },
     });
 

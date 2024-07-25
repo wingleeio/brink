@@ -12,5 +12,6 @@ export function metadata() {
 export function loader(c: Context<typeof context>) {
     return {
         version: c.store.version,
+        message: "Hello Sina",
     };
 }

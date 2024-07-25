@@ -30,6 +30,7 @@ new Elysia()
         console.log(`Brink HMR is running`);
     })
     .listen(10000);
+await build();
 
 watch("src/", { recursive: true }, async (event, filename) => {
     if (event !== "change") return;

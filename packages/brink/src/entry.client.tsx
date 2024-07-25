@@ -1,4 +1,5 @@
 import { createBrowserRouter, json, RouterProvider, useLoaderData, type DataRouteObject } from "./_internal/router";
+import { Suspense } from "react";
 
 import App from "./_internal/App";
 import { hydrateRoot } from "react-dom/client";
@@ -30,4 +31,9 @@ const dataRouter: DataRouteObject[] = routes.map((route: any) => ({
 
 let router = createBrowserRouter(dataRouter);
 
-hydrateRoot(document, <RouterProvider router={router} fallbackElement={null} />);
+hydrateRoot(
+    document,
+    <Suspense>
+        <RouterProvider router={router} fallbackElement={null} />
+    </Suspense>
+);

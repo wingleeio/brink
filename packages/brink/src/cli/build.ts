@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import { bundlePageServer, bundlePagesClient } from "../bundler/page";
+import { bundlePageServer, bundlePagesClient, createPropTypes } from "../bundler/page";
 import { copyFile, exists, mkdir, readdir, rm } from "fs/promises";
 
 import { externals } from "../_internal/externals";
@@ -30,7 +30,7 @@ export const build = async () => {
     const TSConfig = JSON.stringify(
         {
             compilerOptions: {
-                rootDirs: [".."],
+                rootDirs: ["..", "./types"],
                 paths: {
                     "$*": ["../src/*"],
                 },
@@ -53,6 +53,7 @@ export const build = async () => {
 
     const pageEntries: string[] = [];
     const clientEntries: string[] = [];
+    const typeEntries: string[] = [];
 
     const pages = new Bun.Glob(`${directory}/**/+page.tsx`);
     const pagesServer = new Bun.Glob(`${directory}/**/+page.server.ts`);
@@ -67,15 +68,27 @@ export const build = async () => {
         clientEntries.push(path);
     }
 
+    for (const path of pagesServer.scanSync()) {
+        pageEntries.push(path);
+        typeEntries.push(path);
+    }
+
     for (const path of [
         ...getRoutes.scanSync(),
         ...postRoutes.scanSync(),
         ...putRoutes.scanSync(),
         ...patchRoutes.scanSync(),
         ...deleteRoutes.scanSync(),
-        ...pagesServer.scanSync(),
     ]) {
         pageEntries.push(path);
+    }
+
+    if (typeEntries.length > 0) {
+        for (const path of typeEntries) {
+            const source = await Bun.file(path).text();
+            const contents = createPropTypes(source);
+            await Bun.write((".brink/types/" + path).replace("+page.server.ts", "$props.ts"), contents);
+        }
     }
 
     if (pageEntries.length > 0) {
